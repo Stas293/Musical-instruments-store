@@ -14,11 +14,10 @@ SELECT LAST_INSERT_ID() into nid;
 END$$
 
 DROP PROCEDURE IF EXISTS INSERT_USER_LIST$$
-CREATE DEFINER=root@localhost PROCEDURE INSERT_USER_LIST (IN login VARCHAR(50) CHARSET utf8, IN first_name VARCHAR(50) CHARSET utf8, IN last_name VARCHAR(50) CHARSET utf8, IN email VARCHAR(50) CHARSET utf8, IN phone CHAR(13) CHARSET utf8, IN password VARCHAR(64) CHARSET utf8, IN enabled BOOLEAN, OUT nid BIGINT(20) UNSIGNED)  BEGIN
+CREATE DEFINER=root@localhost PROCEDURE INSERT_USER_LIST (IN login VARCHAR(50) CHARSET utf8, IN first_name VARCHAR(50) CHARSET utf8, IN last_name VARCHAR(50) CHARSET utf8, IN email VARCHAR(50) CHARSET utf8, IN phone CHAR(13) CHARSET utf8, IN password VARCHAR(64) CHARSET utf8, IN enabled TINYINT(1))  BEGIN
+
 INSERT INTO user_list (login, first_name, last_name, email, phone, password, enabled) 
 VALUES (login, first_name, last_name, email, phone, password, enabled);
-
-SELECT LAST_INSERT_ID() into nid;
 
 END$$
 
@@ -26,6 +25,25 @@ DROP PROCEDURE IF EXISTS INSERT_INSTRUMENT_LIST$$
 CREATE DEFINER=root@localhost PROCEDURE INSERT_INSTRUMENT_LIST (IN description VARCHAR(255) CHARSET utf8, IN title VARCHAR(50) CHARSET utf8, IN status_id BIGINT(20), IN price DECIMAL(17, 2), IN closed BOOLEAN, OUT nid BIGINT(20) UNSIGNED)  BEGIN
 INSERT INTO instrument_list (description, title, status_id, price, closed) 
 VALUES (description, title, status_id, price, closed);
+
+SELECT LAST_INSERT_ID() into nid;
+
+END$$
+
+DROP PROCEDURE IF EXISTS INSERT_INSTRUMENT_ORDER$$
+CREATE DEFINER=root@localhost PROCEDURE INSERT_INSTRUMENT_ORDER (IN price decimal(17, 2), IN quantity TINYINT(30), OUT nid BIGINT(20) UNSIGNED)  BEGIN
+INSERT INTO instrument_order (price, quantity) 
+VALUES (price, quantity);
+
+SELECT LAST_INSERT_ID() into nid;
+
+END$$
+
+DROP PROCEDURE IF EXISTS INSERT_ORDER_HISTORY$$
+CREATE DEFINER=root@localhost PROCEDURE INSERT_ORDER_HISTORY (IN user_id BIGINT(20), IN total_sum DECIMAL(17, 2), IN title VARCHAR(50), IN rating BIGINT, IN status_id BIGINT, OUT nid BIGINT(20) UNSIGNED)  BEGIN
+
+INSERT INTO order_history(user_id, total_sum, title, rating, status_id) 
+VALUES (user_id, total_sum, title, rating, status_id);
 
 SELECT LAST_INSERT_ID() into nid;
 
@@ -47,6 +65,14 @@ UPDATE instrument_list
 
 END$$
 
+DROP PROCEDURE IF EXISTS UPDATE_INSTRUMENT_ORDER$$
+CREATE DEFINER=root@localhost PROCEDURE UPDATE_INSTRUMENT_ORDER (IN order_id bigint(20), IN instrument_id bigint(20), IN price decimal(17, 2), IN quantity TINYINT(30))  BEGIN
+UPDATE instrument_order 
+	SET price = price, quantity = quantity 
+    WHERE order_id = order_id and instrument_id = instrument_id;
+
+END$$
+
 DROP PROCEDURE IF EXISTS DELETE_ORDER_LIST$$
 CREATE DEFINER=root@localhost PROCEDURE DELETE_ORDER_LIST (IN order_id bigint(20))  BEGIN
 
@@ -65,6 +91,13 @@ DROP PROCEDURE IF EXISTS DELETE_INSTRUMENT_LIST$$
 CREATE DEFINER=root@localhost PROCEDURE DELETE_INSTRUMENT_LIST (IN title VARCHAR(50) CHARSET utf8)  BEGIN
 
 DELETE FROM instrument_list WHERE title = title;
+
+END$$
+
+DROP PROCEDURE IF EXISTS DELETE_INSTRUMENT_ORDER$$
+CREATE DEFINER=root@localhost PROCEDURE DELETE_INSTRUMENT_ORDER (IN order_id bigint(20), IN instrument_id bigint(20))  BEGIN
+
+DELETE FROM instrument_order WHERE order_id = order_id and instrument_id = instrument_id;
 
 END$$
 
@@ -196,7 +229,7 @@ CREATE TABLE IF NOT EXISTS instrument_order (
 	instrument_id 	bigint(20) 		unsigned NOT NULL ,
 	order_id 		bigint(20) 		unsigned NOT NULL ,
 	price 			DECIMAL(17, 2) 	NOT NULL DEFAULT '0',
-	quantity 		DECIMAL(17, 0) 	NOT NULL DEFAULT '0',
+	quantity 		TINYINT(30) 	NOT NULL DEFAULT '0',
 	CONSTRAINT 		fk_instrument_order_instrument_list FOREIGN KEY (instrument_id) references instrument_list(instrument_id),
 	CONSTRAINT 		fk_instrument_order_order_list FOREIGN KEY (order_id) references order_list(order_id),
     CONSTRAINT		pk_instrument_order 	PRIMARY KEY (instrument_id, order_id)
